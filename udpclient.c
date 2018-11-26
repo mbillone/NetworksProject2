@@ -31,7 +31,13 @@ int main(void) {
    char modifiedSentence[STRING_SIZE]; /* receive message */
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
-  
+    FILE * fp;
+    char * line = NULL;
+    size_t len = 0;
+    ssize_t read;
+    int timeoutLen = 0;
+    int packetLossRate = 0;
+    int ACKLossRate =0;
    /* open a socket */
 
    if ((sock_client = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -39,6 +45,12 @@ int main(void) {
       exit(1);
    }
 
+
+    fp = fopen("sample.txt", "r");
+    if (fp == NULL)
+        exit(EXIT_FAILURE);
+
+    
    /* Note: there is no need to initialize local client address information
             unless you want to specify a specific local port.
             The local address initialization and binding is done automatically
@@ -98,12 +110,27 @@ int main(void) {
 
    /* user interface */
 
-   printf("Please input a sentence:\n");
-   scanf("%s", sentence);
-   msg_len = strlen(sentence) + 1;
+    printf("Please input a Timeout Quantity ");
+    scanf("%d", &timeoutLen);
+    printf("Please input a Packet Loss Rate ");
+    scanf("%d", &packetLossRate);
+    printf("Please input an ACK Loss Rate ");
+    scanf("%d", &ACKLossRate);
+
+//    printf("Please input a sentence:\n");
+//    scanf("%s", sentence);
+//    msg_len = strlen(sentence) + 1;
 
    /* send message */
-  
+    while ((read = getline(&line, &len, fp)) != -1) {
+        /*
+        THIS IS THE CODE TO READ IN THE LINES OF THE FILE
+        */ 
+        printf("Retrieved line of length %zu:\n", read);
+        printf("%s", line);
+
+    }
+    printf("\n");
    bytes_sent = sendto(sock_client, sentence, msg_len, 0,
             (struct sockaddr *) &server_addr, sizeof (server_addr));
 
@@ -111,7 +138,7 @@ int main(void) {
   
    printf("Waiting for response from server...\n");
    bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
-                (struct sockaddr *) 0, (int *) 0);
+                (struct sockaddr *) 0, 0);
    printf("\nThe response from server is:\n");
    printf("%s\n\n", modifiedSentence);
 
