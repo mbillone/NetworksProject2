@@ -1,4 +1,4 @@
-/* udp_client.c */ 
+/* udp_client.c */
 /* Programmed by Adarsh Sethi */
 /* Sept. 13, 2018 */
 
@@ -18,8 +18,9 @@
 int timeoutLen;
 double plr;
 double alr;
-int timerAmount;
-    
+int expectedACK;
+int receivedACK;
+
 
 // void getData(){
 //     printf("Please input a Timeout Quantity ");
@@ -39,7 +40,7 @@ int main(void) {
     char inputTimeoutLen[STRING_SIZE];
     char inputPacketLossRate[STRING_SIZE];
     char inputACKLossRate[STRING_SIZE];
-   int sock_client;  /* Socket used by client */ 
+   int sock_client;  /* Socket used by client */
     int firstRound= 0;
    struct sockaddr_in client_addr;  /* Internet address structure that
                                         stores client address */
@@ -54,6 +55,7 @@ int main(void) {
 
    char sentence[STRING_SIZE];  /* send message */
    char modifiedSentence[STRING_SIZE]; /* receive message */
+   char ack[4]; //ack to be received from the server
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
     FILE * fp;
@@ -72,12 +74,12 @@ int main(void) {
     if (fp == NULL)
         exit(EXIT_FAILURE);
 
-    
+
    /* Note: there is no need to initialize local client address information
             unless you want to specify a specific local port.
             The local address initialization and binding is done automatically
             when the sendto function is called later, if the socket has not
-            already been bound. 
+            already been bound.
             The code below illustrates how to initialize and bind to a
             specific local port, if that is desired. */
 
@@ -85,7 +87,7 @@ int main(void) {
 
    client_port = 0;   /* This allows choice of any available local port */
 
-   /* Uncomment the lines below if you want to specify a particular 
+   /* Uncomment the lines below if you want to specify a particular
              local port: */
    /*
    printf("Enter port number for client: ");
@@ -96,7 +98,7 @@ int main(void) {
    memset(&client_addr, 0, sizeof(client_addr));
    client_addr.sin_family = AF_INET;
    client_addr.sin_addr.s_addr = htonl(INADDR_ANY); /* This allows choice of
-                                        any host interface, if more than one 
+                                        any host interface, if more than one
                                         are present */
    client_addr.sin_port = htons(client_port);
 
@@ -168,10 +170,10 @@ int main(void) {
         else{
             sprintf(message,"%d;%d;%s", convertdata,sequenceNumber,line);
         }
-        
+
         if (sequenceNumber==0)
             sequenceNumber = 1;
-        else   
+        else
             sequenceNumber = 0;
         // printf("%s\n",message);
         while (flag == 0){
@@ -216,7 +218,7 @@ int main(void) {
 //             (struct sockaddr *) &server_addr, sizeof (server_addr));
 
 //    /* get response from server */
-  
+
 //    printf("Waiting for response from server...\n");
 //    bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
 //                 (struct sockaddr *) 0, 0);
