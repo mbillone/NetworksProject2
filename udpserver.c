@@ -16,14 +16,21 @@
    incoming messages from clients. You should change this to a different
    number to prevent conflicts with others in the class. */
 
-#define SERV_UDP_PORT 3636
+#define SERV_UDP_PORT 3637
 
 double timeoutLen;
-double plr;
-double alr;
+
+double packetLossRate;
+double ackLossRate;
+int receivedSequence;
+int dataLength;
+int expectedSequence = 0;
+int ackSequence;
+int firstMessage = 1;
+
 int packetLoss(){
     double random = drand48();
-    if (random<plr){
+    if (random<packetLossRate){
         return 0;
     }
     else{
@@ -77,7 +84,7 @@ int main(void) {
 
    /* wait for incoming messages in an indefinite loop */
 
-   printf("Waiting for incoming messages on port %hu\n\n", 
+   printf("Waiting for incoming messages on port %hu\n\n",
                            server_port);
 
    client_addr_len = sizeof (client_addr);
@@ -101,19 +108,58 @@ int main(void) {
         int i;
         int j;
         int cnt;
-        j=0; 
+        j=0;
         cnt=0;
         for(i=0;i<=(strlen(sentence));i++){
             if(sentence[i]==';'||sentence[i]=='\0'){
                 splitStrings[cnt][j]='\0';
-                cnt++; 
-                j=0; 
+                cnt++;
+                j=0;
             }
             else{
                 splitStrings[cnt][j]=sentence[i];
                 j++;
             }
         }
+
+        if (firstMessage == 1){
+          packetLossRate = atof(splitStrings[0]);
+          printf("Packet loss Rate is: %f\n", packetLossRate);
+          ackLossRate = atof(splitStrings[1]);
+          printf("ACK loss rate is: %f\n", ackLossRate);
+          dataLength = atoi(splitStrings[2]);
+          printf("Packet has size: %d\n", dataLength);
+          receivedSequence = atoi(splitStrings[3]);
+          printf("Sequence Number is: %d\n", receivedSequence);
+          firstMessage = 0;
+        }
+        else {
+          dataLength = atoi(splitStrings[0]);
+          printf("Packet has size: %d\n", dataLength);
+          receivedSequence = atoi(splitStrings[1]);
+          printf("Sequence Number is: %d\n", receivedSequence);
+        }
+
+        if (expectedSequence != receivedSequence && receivedSequence == 1){
+          ackSequence = 0;
+        }
+        else if(expectedSequence != receivedSequence && receivedSequence == 0){
+          ackSequence = 1;
+        }
+        else if(expectedSequence == receivedSequence && receivedSequence == 1){
+          printf("Packet received with sequence number: %d\n", receivedSequence);
+          expectedSequence = 0;
+        }
+        else if(expectedSequence == receivedSequence && receivedSequence == 0){
+          printf("Packet received with sequence number: %d\n", receivedSequence);
+          expectedSequence = 1;
+        }
+        else {
+          printf("Error on comparing sequence numbers\n");
+          EXIT_FAILURE;
+        }
+
+
       /* prepare the message to send */
 
       msg_len = bytes_recd;
@@ -121,7 +167,7 @@ int main(void) {
          modifiedSentence[i] = toupper (sentence[i]);
 
       /* send message */
- 
+
       bytes_sent = sendto(sock_server, "modifiedSentence", msg_len, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
    }
