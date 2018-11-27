@@ -25,7 +25,8 @@ double ackLossRate;
 int receivedSequence;
 int dataLength;
 int expectedSequence = 0;
-int ackSequence;
+int ackSequence = 0;
+char ack[4];
 int firstMessage = 1;
 
 int packetLoss(){
@@ -149,10 +150,12 @@ int main(void) {
         else if(expectedSequence == receivedSequence && receivedSequence == 1){
           printf("Packet received with sequence number: %d\n", receivedSequence);
           expectedSequence = 0;
+          ackSequence = 1;
         }
         else if(expectedSequence == receivedSequence && receivedSequence == 0){
           printf("Packet received with sequence number: %d\n", receivedSequence);
           expectedSequence = 1;
+          ackSequence = 0;
         }
         else {
           printf("Error on comparing sequence numbers\n");
@@ -162,13 +165,16 @@ int main(void) {
 
       /* prepare the message to send */
 
-      msg_len = bytes_recd;
-      for (i=0; i<msg_len; i++)
-         modifiedSentence[i] = toupper (sentence[i]);
+      sprintf(ack, "%d", ackSequence);
+      // msg_len = bytes_recd;
+      // for (i=0; i<msg_len; i++)
+      //    modifiedSentence[i] = toupper (sentence[i]);
+
+
 
       /* send message */
 
-      bytes_sent = sendto(sock_server, "modifiedSentence", msg_len, 0,
+      bytes_sent = sendto(sock_server, ack, 3, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
    }
 }
