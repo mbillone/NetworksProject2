@@ -43,7 +43,7 @@ int main(void) {
     char inputPacketLossRate[STRING_SIZE];
     char inputACKLossRate[STRING_SIZE];
    int sock_client;  /* Socket used by client */ 
-
+    int firstRound= 0;
    struct sockaddr_in client_addr;  /* Internet address structure that
                                         stores client address */
    unsigned short client_port;  /* Port number used by client (local port) */
@@ -140,10 +140,10 @@ int main(void) {
     sscanf(inputTimeoutLen, "%lf", &timeoutLen);
     printf("Please input an ACK Loss Rate:\n");
     scanf("%s", inputACKLossRate);
-    sscanf(inputACKLossRate, "%lf", &alr);
+    // sscanf(inputACKLossRate, "%lf", &alr);
     printf("Please input a Packet Loss Rate:\n");
     scanf("%s", inputPacketLossRate);
-    sscanf(inputPacketLossRate, "%lf", &plr);
+    // sscanf(inputPacketLossRate, "%lf", &plr);
 
     printf("\n");
     int i = 0;
@@ -159,7 +159,14 @@ int main(void) {
         memset(message, 0, 100 );
         int convertdata = read-1;
         char datastr[2];
-        sprintf(message,"%d %d %s", convertdata,sequenceNumber,line);
+        if (firstRound == 0){
+            sprintf(message,"%s;%s;%d;%d;%s", inputPacketLossRate,inputACKLossRate,convertdata,sequenceNumber,line);
+            firstRound+=1;
+        }
+        else{
+            sprintf(message,"%d;%d;%s", convertdata,sequenceNumber,line);
+        }
+        
         if (sequenceNumber==0)
             sequenceNumber = 1;
         else   
