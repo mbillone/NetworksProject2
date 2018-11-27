@@ -160,7 +160,7 @@ int main(void) {
             sequenceNumber = 0;
         printf("%s\n",message);
         while (flag == 0){
-            bytes_sent = sendto(sock_client, message, convertdata, 0,
+            bytes_sent = sendto(sock_client, message, 100, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
             printf("Waiting for response from server...\n");
             bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,

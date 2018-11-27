@@ -83,47 +83,37 @@ int main(void) {
    client_addr_len = sizeof (client_addr);
 
    for (;;) {
-
+      memset(sentence, 0, STRING_SIZE );
       bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-    //   printf("Received Sentence is: %s\n     with length %d\n\n",
-    //                      sentence, bytes_recd);
-        // char splitStrings[5][80];
-        // int i;
-        // int j;
-        // int cnt;
-        // j=0; 
-        // cnt=0;
-        // // printf("%s",sentence);
-        // for(i=0;i<=(strlen(sentence));i++){
-        //     if(sentence[i]==';'||sentence[i]=='\0'){
-        //         splitStrings[cnt][j]='\0';
-        //         cnt++; 
-        //         j=0; 
-        //     }
-        //     else{
-        //         splitStrings[cnt][j]=sentence[i];
-        //         j++;
-        //     }
-        // }
-        char splitStrings[5][7];
-        // char s[2] = ";";
+      printf("Received Sentence is: %s\n     with length %d\n\n",
+                         sentence, bytes_recd);
+        /*
+        char s[1] = ";";
         char *pt;
         pt = strtok (sentence,";");
         while (pt != NULL) {
             printf("%s\n",pt);
-            // printf("%d\n", a);
             pt = strtok (NULL, ";");
         }
-        // token = strtok(NULL, s);
-        int k;
-        int l;
-        // for (k = 0; k<5; k++){
-        //     for (l = 0; l<80;l++){
-        //         printf("%c",splitStrings[i][l]);
-        //     }
-        //     printf("\n");
-        // }
+        */
+        char splitStrings[5][80];
+        int i;
+        int j;
+        int cnt;
+        j=0; 
+        cnt=0;
+        for(i=0;i<=(strlen(sentence));i++){
+            if(sentence[i]==';'||sentence[i]=='\0'){
+                splitStrings[cnt][j]='\0';
+                cnt++; 
+                j=0; 
+            }
+            else{
+                splitStrings[cnt][j]=sentence[i];
+                j++;
+            }
+        }
       /* prepare the message to send */
 
       msg_len = bytes_recd;
@@ -132,7 +122,7 @@ int main(void) {
 
       /* send message */
  
-      bytes_sent = sendto(sock_server, modifiedSentence, msg_len, 0,
+      bytes_sent = sendto(sock_server, "modifiedSentence", msg_len, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
    }
 }
