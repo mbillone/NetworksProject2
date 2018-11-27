@@ -9,11 +9,39 @@
 #include <sys/socket.h>     /* for socket, sendto, and recvfrom */
 #include <netinet/in.h>     /* for sockaddr_in */
 #include <unistd.h>         /* for close */
+#include <time.h>
 
 #define STRING_SIZE 1024
+double timeoutLen;
+double plr;
+double alr;
+    
+int packetLoss(){
+    double random = drand48();
+    if (random<plr){
+        return 0;
+    }
+    else{
+        return 1;
+    }
+}
+// void getData(){
+//     printf("Please input a Timeout Quantity ");
+//     scanf("%d", &timeoutLen);
+//     printf("Please input an ACK Loss Rate ");
+//     scanf("%d", &ACKLossRate);
+//     printf("Please input a Packet Loss Rate ");
+//     scanf("%d", &packetLossRate);
+//     printf("%d",packetLossRate);
+//     return;
+// }
 
 int main(void) {
-
+    srand(time(NULL));
+    int sequenceNumber= 0;
+    char inputTimeoutLen[STRING_SIZE];
+    char inputPacketLossRate[STRING_SIZE];
+    char inputACKLossRate[STRING_SIZE];
    int sock_client;  /* Socket used by client */ 
 
    struct sockaddr_in client_addr;  /* Internet address structure that
@@ -35,9 +63,6 @@ int main(void) {
     char * line = NULL;
     size_t len = 0;
     ssize_t read;
-    int timeoutLen = 0;
-    int packetLossRate = 0;
-    int ACKLossRate =0;
    /* open a socket */
 
    if ((sock_client = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -87,6 +112,7 @@ int main(void) {
       exit(1);
    }
 
+
    /* end of local address initialization and binding */
 
    /* initialize server address information */
@@ -109,32 +135,55 @@ int main(void) {
    server_addr.sin_port = htons(server_port);
 
    /* user interface */
+    printf("Please input a Timeout Quantity:\n");
+    scanf("%s", inputTimeoutLen);
+    sscanf(inputTimeoutLen, "%lf", &timeoutLen);
+    printf("Please input an ACK Loss Rate:\n");
+    scanf("%s", inputACKLossRate);
+    sscanf(inputACKLossRate, "%lf", &alr);
+    printf("Please input a Packet Loss Rate:\n");
+    scanf("%s", inputPacketLossRate);
+    sscanf(inputPacketLossRate, "%lf", &plr);
 
-    printf("Please input a Timeout Quantity ");
-    scanf("%d", &timeoutLen);
-    printf("Please input a Packet Loss Rate ");
-    scanf("%d", &packetLossRate);
-    printf("Please input an ACK Loss Rate ");
-    scanf("%d", &ACKLossRate);
+    printf("\n");
+    int i = 0;
+    // int messageLen = 0;
+    char message[100];
+    while ((read = getline(&line, &len, fp)) != -1){
+    /*
+    THIS IS THE CODE TO READ IN THE LINES OF THE FILE
+    */ 
+        // printf("Retrieved line of length %zu:\n", read);
+        // printf("%s", line);
 
+        memset(message, 0, 100 );
+        int convertdata = read-1;
+        char datastr[2];
+        sprintf(message,"%d %d %s", convertdata,sequenceNumber,line);
+        if (sequenceNumber==0)
+            sequenceNumber = 1;
+        else   
+            sequenceNumber = 0;
+        // strcat(message,line);
+        printf("%s\n",message);
+        
+        i = packetLoss();
+        // if (i==0){
+        //     printf("dropped\n");
+        // }
+        // else{
+        //     printf("kept\n");
+        // }
+    };
+    printf("\n");
 //    printf("Please input a sentence:\n");
 //    scanf("%s", sentence);
 //    msg_len = strlen(sentence) + 1;
 
-   /* send message */
-    while ((read = getline(&line, &len, fp)) != -1) {
-        /*
-        THIS IS THE CODE TO READ IN THE LINES OF THE FILE
-        */ 
-        printf("Retrieved line of length %zu:\n", read);
-        printf("%s", line);
-
-    }
-    printf("\n");
    bytes_sent = sendto(sock_client, sentence, msg_len, 0,
             (struct sockaddr *) &server_addr, sizeof (server_addr));
 
-   /* get response from server */
+//    /* get response from server */
   
    printf("Waiting for response from server...\n");
    bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
