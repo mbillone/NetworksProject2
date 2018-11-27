@@ -150,12 +150,7 @@ int main(void) {
     // int messageLen = 0;
     char message[100];
     while ((read = getline(&line, &len, fp)) != -1){
-    /*
-    THIS IS THE CODE TO READ IN THE LINES OF THE FILE
-    */ 
-        // printf("Retrieved line of length %zu:\n", read);
-        // printf("%s", line);
-
+        int flag = 0;
         memset(message, 0, 100 );
         int convertdata = read-1;
         char datastr[2];
@@ -171,10 +166,18 @@ int main(void) {
             sequenceNumber = 1;
         else   
             sequenceNumber = 0;
-        // strcat(message,line);
         printf("%s\n",message);
-        
-        i = packetLoss();
+        while (flag == 0){
+            bytes_sent = sendto(sock_client, message, convertdata, 0,
+                (struct sockaddr *) &server_addr, sizeof (server_addr));
+            printf("Waiting for response from server...\n");
+            bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
+                            (struct sockaddr *) 0, 0);
+            printf("\nThe response from server is:\n");
+            printf("%s\n\n", modifiedSentence);
+            flag = 1;
+        }
+        // i = packetLoss();
         // if (i==0){
         //     printf("dropped\n");
         // }
@@ -187,16 +190,16 @@ int main(void) {
 //    scanf("%s", sentence);
 //    msg_len = strlen(sentence) + 1;
 
-   bytes_sent = sendto(sock_client, sentence, msg_len, 0,
-            (struct sockaddr *) &server_addr, sizeof (server_addr));
+//    bytes_sent = sendto(sock_client, sentence, msg_len, 0,
+//             (struct sockaddr *) &server_addr, sizeof (server_addr));
 
 //    /* get response from server */
   
-   printf("Waiting for response from server...\n");
-   bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
-                (struct sockaddr *) 0, 0);
-   printf("\nThe response from server is:\n");
-   printf("%s\n\n", modifiedSentence);
+//    printf("Waiting for response from server...\n");
+//    bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
+//                 (struct sockaddr *) 0, 0);
+//    printf("\nThe response from server is:\n");
+//    printf("%s\n\n", modifiedSentence);
 
    /* close the socket */
 
