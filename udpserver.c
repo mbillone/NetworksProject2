@@ -18,6 +18,19 @@
 
 #define SERV_UDP_PORT 3636
 
+double timeoutLen;
+double plr;
+double alr;
+int packetLoss(){
+    double random = drand48();
+    if (random<plr){
+        return 0;
+    }
+    else{
+        return 1;
+    }
+}
+
 int main(void) {
 
    int sock_server;  /* Socket on which server listens to clients */
@@ -73,9 +86,44 @@ int main(void) {
 
       bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-      printf("Received Sentence is: %s\n     with length %d\n\n",
-                         sentence, bytes_recd);
-
+    //   printf("Received Sentence is: %s\n     with length %d\n\n",
+    //                      sentence, bytes_recd);
+        // char splitStrings[5][80];
+        // int i;
+        // int j;
+        // int cnt;
+        // j=0; 
+        // cnt=0;
+        // // printf("%s",sentence);
+        // for(i=0;i<=(strlen(sentence));i++){
+        //     if(sentence[i]==';'||sentence[i]=='\0'){
+        //         splitStrings[cnt][j]='\0';
+        //         cnt++; 
+        //         j=0; 
+        //     }
+        //     else{
+        //         splitStrings[cnt][j]=sentence[i];
+        //         j++;
+        //     }
+        // }
+        char splitStrings[5][7];
+        // char s[2] = ";";
+        char *pt;
+        pt = strtok (sentence,";");
+        while (pt != NULL) {
+            printf("%s\n",pt);
+            // printf("%d\n", a);
+            pt = strtok (NULL, ";");
+        }
+        // token = strtok(NULL, s);
+        int k;
+        int l;
+        // for (k = 0; k<5; k++){
+        //     for (l = 0; l<80;l++){
+        //         printf("%c",splitStrings[i][l]);
+        //     }
+        //     printf("\n");
+        // }
       /* prepare the message to send */
 
       msg_len = bytes_recd;

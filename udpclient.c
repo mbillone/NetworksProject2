@@ -16,15 +16,7 @@ double timeoutLen;
 double plr;
 double alr;
     
-int packetLoss(){
-    double random = drand48();
-    if (random<plr){
-        return 0;
-    }
-    else{
-        return 1;
-    }
-}
+
 // void getData(){
 //     printf("Please input a Timeout Quantity ");
 //     scanf("%d", &timeoutLen);
