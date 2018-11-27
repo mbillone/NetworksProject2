@@ -86,7 +86,7 @@ int main(void) {
       memset(sentence, 0, STRING_SIZE );
       bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-      printf("Received Sentence is: %s\n     with length %d\n\n",
+      printf("Received Sentence is: %s\n     with length %d",
                          sentence, bytes_recd);
         /*
         char s[1] = ";";
@@ -122,7 +122,14 @@ int main(void) {
 
       /* send message */
  
-      bytes_sent = sendto(sock_server, "modifiedSentence", msg_len, 0,
+      double random = drand48();
+      if (random < .5){
+          printf("\nreturning this one\n");
+            bytes_sent = sendto(sock_server, "modifiedSentence", msg_len, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
+      }
+      else{
+          printf("\n not gonna return\n");
+      }
    }
 }
