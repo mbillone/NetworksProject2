@@ -168,31 +168,34 @@ int main(void) {
             if (retransmissions==0){
                 totalPackets+=1;
                 totalData+=convertdata;
+                printf("Packet %d transmitted with %d data bytes\n",temp.sequenceNumber, temp.dataCount);
+            }
+            else{
+                printf("Packet %d retransmitted with %d data bytes\n",temp.sequenceNumber, temp.dataCount);
             }
             totalTransmissions+=1;
             retransmissions+=1;
             bytes_sent = sendto(sock_client, &temp, convertdata+4, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
-            printf("Waiting for response from server...\n");
+            // printf("Waiting for response from server...\n");
             if ((recvfrom(sock_client, ack, STRING_SIZE, 0,
                 (struct sockaddr *) 0, 0))<0){
-                printf("\nTimeout Expired\n");
+                printf("\nTimeout expired for packet numbered %d\n", temp.sequenceNumber);
                 totalTimeouts+=1;
             }
             else{
-                printf("\nreceived\n");
                 flag = 1;
                 receivedACK = atoi(ack);
                 if (expectedACK == receivedACK && receivedACK == 1){
                   expectedACK = 0;
-                  printf("Received ACK has sequence number: %d\n", receivedACK);
+                  printf("ACK %d received\n", receivedACK);
                 }
                 else if (expectedACK == receivedACK && receivedACK == 0){
                   expectedACK = 1;
-                  printf("Received ACK has sequence number: %d\n", receivedACK);
+                  printf("ACK %d received\n", receivedACK);
                 }
                 else{
-                    printf("Received ACK has sequence number: %d\n", receivedACK);
+                    printf("ACK %d received\n", receivedACK);
                   printf("Error receiving ACK\n");
                   EXIT_FAILURE;
                 }
@@ -204,6 +207,9 @@ int main(void) {
         }
 
     };
+    struct dataPacket temp = {.dataCount = 0, .sequenceNumber = sequenceNumber, .data = "Finished"};
+    printf("End of Transmission Packet with sequence number %d transmitted with c data bytes %d\n",temp.sequenceNumber,temp.dataCount);
+    sendto(sock_client, &temp, 10, 0,(struct sockaddr *) &server_addr, sizeof (server_addr));
     printf("\nTotal Packets: %d", totalPackets);
     printf("\nTotal Data: %d",totalData);
     printf("\nTotal Retransmissions: %d",totalRetransmissions);
@@ -211,9 +217,7 @@ int main(void) {
     printf("\nTotal ACKs: %d",totalACKs);
     printf("\nTotal Timeouts: %d",totalTimeouts);
     printf("\n");
-    struct dataPacket temp = {.dataCount = 0, .sequenceNumber = 0, .data = "Finished"};
-    sendto(sock_client, &temp, 10, 0,(struct sockaddr *) &server_addr, sizeof (server_addr));
-   /* close the socket */
+    /* close the socket */
 
    close (sock_client);
    fclose(fp);
