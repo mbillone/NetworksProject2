@@ -159,7 +159,6 @@ int main(void) {
         char buffer[100], *ptr;
         struct dataPacket temp = {.dataCount = convertdata, .sequenceNumber = sequenceNumber, .data = * line};
         memcpy(temp.data,line,strlen(line));
-        printf("%s", temp.data);
         if (sequenceNumber==0)
             sequenceNumber = 1;
         else
@@ -177,7 +176,6 @@ int main(void) {
             retransmissions+=1;
             bytes_sent = sendto(sock_client, &temp, convertdata+4, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
-            // printf("Waiting for response from server...\n");
             if ((recvfrom(sock_client, ack, STRING_SIZE, 0,
                 (struct sockaddr *) 0, 0))<0){
                 printf("\nTimeout expired for packet numbered %d\n", temp.sequenceNumber);
@@ -186,7 +184,6 @@ int main(void) {
             else{
                 flag = 1;
                 receivedACK = atoi(ack);
-                printf("ACK retreived: %d\n", receivedACK);
                 if (expectedACK == receivedACK && receivedACK == 1){
                   expectedACK = 0;
                   printf("Received ACK has sequence number: %d\n", receivedACK);

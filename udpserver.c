@@ -79,7 +79,6 @@ int main(void) {
    FILE *fp;
    /* open a socket */
    fp = fopen("output.txt", "w");
-   fprintf(fp,"Hello there");
    if ((sock_server = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
       perror("Server: can't open datagram socket\n");
       exit(1);
@@ -117,29 +116,24 @@ int main(void) {
 
    client_addr_len = sizeof (client_addr);
 
+    struct dataPacket temp;
    for (;;) {
 
      int pl = packetLoss();
-     printf("print from packet loss is: %d\n", pl);
      int al = ackLoss();
-     printf("print from ack loss is: %d\n", al);
-
+     memset(temp.data, 0, 80 );
       memset(sentence, 0, STRING_SIZE );
-      struct dataPacket temp;
       bytes_recd = recvfrom(sock_server, &temp, sizeof(temp), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-        printf("received: %s\n", temp.data);
-
         allPacketsReceived+=1;
 
         dataLength = temp.dataCount;
-        printf("Packet has size: %d\n", dataLength);
 
         receivedSequence = temp.sequenceNumber;
-        printf("Sequence Number is: %d\n", receivedSequence);
 
         if (dataLength==0){
             int totalAcks = droppedACKs+acksWithoutLoss;
+            printf("End of Transmission Packet with sequence number %d received with c data bytes %d\n",temp.sequenceNumber,temp.dataCount);
             printf("\nSuccessful Data Packets: %d",successfulDataPackets);
             printf("\nBytes Delivered to Users: %d",bytesDeliveredToUser);
             printf("\nDuplicate Packets: %d",duplicatePackets);
@@ -154,28 +148,26 @@ int main(void) {
         }
         else if (pl==0){
             packetsDroppedDueToLoss +=1;
-            printf("\npacket %d loss\n",temp.sequenceNumber);
+            printf("\nPacket %d lost\n",temp.sequenceNumber);
         }
         else{
             if (expectedSequence != receivedSequence && receivedSequence == 1){
                 duplicatePackets+=1;
                 ackSequence = 0;
-                printf("Packet is duplicate, Sending ACK: %d\n", ackSequence);
+                printf("Duplicate packet %d received with %d databytes",temp.sequenceNumber,temp.dataCount);
             }
             else if(expectedSequence != receivedSequence && receivedSequence == 0){
                 duplicatePackets+=1;
                 ackSequence = 1;
-                printf("Packet is duplicate, Sending ACK: %d\n", ackSequence);
+                printf("Duplicate packet %d received with %d databytes",temp.sequenceNumber,temp.dataCount);
             }
             else if(expectedSequence == receivedSequence && receivedSequence == 1){
-                printf("Packet received with sequence number: %d\n", receivedSequence);
-                fprintf(fp,"%s\n",temp.data);
+                printf("Packet %d received with %d data bytes", temp.sequenceNumber, temp.dataCount);
                 expectedSequence = 0;
                 ackSequence = 1;
             }
             else if(expectedSequence == receivedSequence && receivedSequence == 0){
-                printf("Packet received with sequence number: %d\n", receivedSequence);
-                fprintf(fp,"%s\n",temp.data);
+                printf("Packet %d received with %d data bytes", temp.sequenceNumber, temp.dataCount); 
                 expectedSequence = 1;
                 ackSequence = 0;
             }
@@ -201,7 +193,7 @@ int main(void) {
                 successfulDataPackets+=1;
                 bytesDeliveredToUser+=temp.dataCount;
                 acksWithoutLoss+=1;
-                printf("\nreturning this one\n");
+                printf("ACK %s transmitted\n", ack);
                 bytes_sent = sendto(sock_server, ack, 2, 0,
                     (struct sockaddr*) &client_addr, client_addr_len);
             }
@@ -215,14 +207,4 @@ int main(void) {
             }
         }
    }
-//    int totalAcks = droppedACKs+acksWithoutLoss;
-//    printf("\nSuccessful Data Packets: %d",successfulDataPackets);
-//    printf("\nBytes Delivered to Users: %d",bytesDeliveredToUser);
-//    printf("\nDuplicate Packets: %d",duplicatePackets);
-//    printf("\nPackets Dropped Due to Loss: %d",packetsDroppedDueToLoss);
-//    printf("\nAll Packets Received: %d",allPacketsReceived);
-//    printf("\nACKs Without Loss: %d", acksWithoutLoss);
-//    printf("\nDropped ACKs: %d",droppedACKs);
-//    printf("\nTotal ACKs: %d",totalAcks);
-//    printf("\n");
 }
