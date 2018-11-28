@@ -20,18 +20,18 @@
 
 double timeoutLen;
 
-double packetLossRate;
-double ackLossRate;
+
 int receivedSequence;
 int dataLength;
 int expectedSequence = 0;
 int ackSequence = 0;
-char ack[4];
-int firstMessage = 1;
+char ack[2];
+float inputPacketLossRate;
+float inputACKLossRate;
 
 int packetLoss(){
     double random = drand48();
-    if (random<packetLossRate){
+    if (random<inputPacketLossRate){
         return 0;
     }
     else{
@@ -40,7 +40,7 @@ int packetLoss(){
 }
 int ackLoss(){
     double random = drand48();
-    if (random<ackLossRate){
+    if (random<inputACKLossRate){
         return 0;
     }
     else{
@@ -92,6 +92,12 @@ int main(void) {
       exit(1);
    }
 
+   // User input for the ACKLossRate and packetLossRate
+   printf("Please input an ACK Loss Rate:\n");
+   scanf("%f", &inputACKLossRate);
+   printf("Please input a Packet Loss Rate:\n");
+   scanf("%f", &inputPacketLossRate);
+
    /* wait for incoming messages in an indefinite loop */
 
    printf("Waiting for incoming messages on port %hu\n\n",
@@ -132,29 +138,18 @@ int main(void) {
             }
         }
 
-        if (firstMessage == 1){
-          packetLossRate = atof(splitStrings[0]);
-          printf("Packet loss Rate is: %f\n", packetLossRate);
-          ackLossRate = atof(splitStrings[1]);
-          printf("ACK loss rate is: %f\n", ackLossRate);
-          dataLength = atoi(splitStrings[2]);
-          printf("Packet has size: %d\n", dataLength);
-          receivedSequence = atoi(splitStrings[3]);
-          printf("Sequence Number is: %d\n", receivedSequence);
-          firstMessage = 0;
-        }
-        else {
-          dataLength = atoi(splitStrings[0]);
-          printf("Packet has size: %d\n", dataLength);
-          receivedSequence = atoi(splitStrings[1]);
-          printf("Sequence Number is: %d\n", receivedSequence);
-        }
+        dataLength = atoi(splitStrings[0]);
+        printf("Packet has size: %d\n", dataLength);
+        receivedSequence = atoi(splitStrings[1]);
+        printf("Sequence Number is: %d\n", receivedSequence);
 
         if (expectedSequence != receivedSequence && receivedSequence == 1){
           ackSequence = 0;
+          printf("Packet is duplicate, Sending ACK: %d\n", ackSequence);
         }
         else if(expectedSequence != receivedSequence && receivedSequence == 0){
           ackSequence = 1;
+          printf("Packet is duplicate, Sending ACK: %d\n", ackSequence);
         }
         else if(expectedSequence == receivedSequence && receivedSequence == 1){
           printf("Packet received with sequence number: %d\n", receivedSequence);
@@ -172,7 +167,7 @@ int main(void) {
         }
 
 
-      /* prepare the message to send */
+      /* prepare the ack to send */
 
       sprintf(ack, "%d", ackSequence);
       // msg_len = bytes_recd;
@@ -187,7 +182,7 @@ int main(void) {
       int al = ackLoss();
       if ((pl==1)&&(al==1)){
           printf("\nreturning this one\n");
-            bytes_sent = sendto(sock_server, "modifiedSentence", msg_len, 0,
+            bytes_sent = sendto(sock_server, ack, 2, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
       }
       else if (pl==0){

@@ -12,36 +12,24 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <math.h> 
+#include <math.h>
 
 #define STRING_SIZE 1024
 int timeoutLen;
 double plr;
 double alr;
-int expectedACK;
+int expectedACK = 0;
 int receivedACK;
 
 
-// void getData(){
-//     printf("Please input a Timeout Quantity ");
-//     scanf("%d", &timeoutLen);
-//     printf("Please input an ACK Loss Rate ");
-//     scanf("%d", &ACKLossRate);
-//     printf("Please input a Packet Loss Rate ");
-//     scanf("%d", &packetLossRate);
-//     printf("%d",packetLossRate);
-//     return;
-// }
-
 int main(void) {
-    
+
     srand(time(NULL));
     int sequenceNumber= 0;
     char inputTimeoutLen[STRING_SIZE];
     char inputPacketLossRate[STRING_SIZE];
     char inputACKLossRate[STRING_SIZE];
    int sock_client;  /* Socket used by client */
-    int firstRound= 0;
    struct sockaddr_in client_addr;  /* Internet address structure that
                                         stores client address */
    unsigned short client_port;  /* Port number used by client (local port) */
@@ -55,7 +43,7 @@ int main(void) {
 
    char sentence[STRING_SIZE];  /* send message */
    char modifiedSentence[STRING_SIZE]; /* receive message */
-   char ack[4]; //ack to be received from the server
+   char ack[2]; //ack to be received from the server
    unsigned int msg_len;  /* length of message */
    int bytes_sent, bytes_recd; /* number of bytes sent or received */
     FILE * fp;
@@ -137,10 +125,6 @@ int main(void) {
     printf("Please input a Timeout Quantity:\n");
     scanf("%s", inputTimeoutLen);
     sscanf(inputTimeoutLen, "%d", &timeoutLen);
-    printf("Please input an ACK Loss Rate:\n");
-    scanf("%s", inputACKLossRate);
-    printf("Please input a Packet Loss Rate:\n");
-    scanf("%s", inputPacketLossRate);
     char            name[20] = {0}; // in case of single character input
     struct timeval timeout;
     if (timeoutLen>=6){
@@ -160,13 +144,8 @@ int main(void) {
         memset(message, 0, 100 );
         int convertdata = read-1;
         char datastr[2];
-        if (firstRound == 0){
-            sprintf(message,"%s;%s;%d;%d;%s", inputPacketLossRate,inputACKLossRate,convertdata,sequenceNumber,line);
-            firstRound+=1;
-        }
-        else{
-            sprintf(message,"%d;%d;%s", convertdata,sequenceNumber,line);
-        }
+
+        sprintf(message,"%d;%d;%s", convertdata,sequenceNumber,line);
 
         if (sequenceNumber==0)
             sequenceNumber = 1;
@@ -183,6 +162,19 @@ int main(void) {
             else{
                 printf("\nreceived\n");
                 flag = 1;
+                receivedACK = atoi(ack);
+                if (expectedACK == receivedACK && receivedACK == 1){
+                  expectedACK = 0;
+                  printf("Received ACK has sequence number: %d\n", receivedACK);
+                }
+                else if (expectedACK == receivedACK && receivedACK == 0){
+                  expectedACK = 1;
+                  printf("Received ACK has sequence number: %d\n", receivedACK);
+                }
+                else{
+                  printf("Error receiving ACK\n");
+                  EXIT_FAILURE;
+                }
             }
         }
     };
