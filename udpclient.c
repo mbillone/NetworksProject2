@@ -144,9 +144,14 @@ int main(void) {
     char message[100];
     setsockopt (sock_client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout));
-                
-    
+    int totalData = 0;
+    int totalPackets = 0;
+    int totalTransmissions = 0;
+    int totalRetransmissions = 0;
+    int totalACKs = 0;
+    int totalTimeouts = 0;
     while ((read = getline(&line, &len, fp)) != -1){
+        int retransmissions = 0;
         int flag = 0;
         memset(message, 0, 100 );
         int convertdata = read-1;
@@ -160,12 +165,19 @@ int main(void) {
         else
             sequenceNumber = 0;
         while (flag == 0){
+            if (retransmissions==0){
+                totalPackets+=1;
+                totalData+=convertdata;
+            }
+            totalTransmissions+=1;
+            retransmissions+=1;
             bytes_sent = sendto(sock_client, &temp, convertdata+4, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
             printf("Waiting for response from server...\n");
-            if ((recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
+            if ((recvfrom(sock_client, ack, STRING_SIZE, 0,
                 (struct sockaddr *) 0, 0))<0){
-                printf("\nnot received\n");
+                printf("\nTimeout Expired\n");
+                totalTimeouts+=1;
             }
             else{
                 printf("\nreceived\n");
@@ -180,15 +192,30 @@ int main(void) {
                   printf("Received ACK has sequence number: %d\n", receivedACK);
                 }
                 else{
+                    printf("Received ACK has sequence number: %d\n", receivedACK);
                   printf("Error receiving ACK\n");
                   EXIT_FAILURE;
                 }
+                totalACKs+=1;
             }
         }
-    };
-    printf("\n");
+        if (retransmissions>1){
+            totalRetransmissions+=retransmissions-1;
+        }
 
+    };
+    printf("\nTotal Packets: %d", totalPackets);
+    printf("\nTotal Data: %d",totalData);
+    printf("\nTotal Retransmissions: %d",totalRetransmissions);
+    printf("\nTotal Transmissions: %d",totalTransmissions);
+    printf("\nTotal ACKs: %d",totalACKs);
+    printf("\nTotal Timeouts: %d",totalTimeouts);
+    printf("\n");
+    struct dataPacket temp = {.dataCount = 0, .sequenceNumber = 0, .data = "Finished"};
+    sendto(sock_client, &temp, 10, 0,(struct sockaddr *) &server_addr, sizeof (server_addr));
    /* close the socket */
 
    close (sock_client);
+   fclose(fp);
 }
+
