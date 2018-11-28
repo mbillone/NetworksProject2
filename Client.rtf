@@ -1,0 +1,254 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red89\green138\blue67;\red23\green23\blue23;\red202\green202\blue202;
+\red183\green111\blue179;\red70\green137\blue204;\red194\green126\blue101;\red212\green214\blue154;\red167\green197\blue152;
+\red67\green192\blue160;\red205\green173\blue106;\red140\green211\blue254;}
+{\*\expandedcolortbl;;\cssrgb\c41569\c60000\c33333;\cssrgb\c11765\c11765\c11765;\cssrgb\c83137\c83137\c83137;
+\cssrgb\c77255\c52549\c75294;\cssrgb\c33725\c61176\c83922;\cssrgb\c80784\c56863\c47059;\cssrgb\c86275\c86275\c66667;\cssrgb\c70980\c80784\c65882;
+\cssrgb\c30588\c78824\c69020;\cssrgb\c84314\c72941\c49020;\cssrgb\c61176\c86275\c99608;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\sl360\partightenfactor0
+
+\f0\fs24 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 /* udp_client.c */\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 /* Programmed by Adarsh Sethi */\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2 /* Sept. 13, 2018 */\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\sl360\partightenfactor0
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <stdio.h>\cf6 \strokec6           \cf2 \strokec2 /* for standard I/O functions */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <stdlib.h>\cf6 \strokec6          \cf2 \strokec2 /* for exit */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <string.h>\cf6 \strokec6          \cf2 \strokec2 /* for memset, memcpy, and strlen */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <netdb.h>\cf6 \strokec6           \cf2 \strokec2 /* for struct hostent and gethostbyname */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <sys/socket.h>\cf6 \strokec6      \cf2 \strokec2 /* for socket, sendto, and recvfrom */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <netinet/in.h>\cf6 \strokec6      \cf2 \strokec2 /* for sockaddr_in */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <unistd.h>\cf6 \strokec6          \cf2 \strokec2 /* for close */\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <time.h>\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <sys/time.h>\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <sys/types.h>\cf4 \cb1 \strokec4 \
+\cf5 \cb3 \strokec5 #include\cf6 \strokec6  \cf7 \strokec7 <math.h>\cf4 \cb1 \strokec4 \
+\
+\cf5 \cb3 \strokec5 #define\cf6 \strokec6  \cf8 \strokec8 STRING_SIZE\cf6 \strokec6  \cf9 \strokec9 1024\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf6 \cb3 \strokec6 int\cf4 \strokec4  timeoutLen;\cb1 \
+\cf6 \cb3 \strokec6 double\cf4 \strokec4  plr;\cb1 \
+\cf6 \cb3 \strokec6 double\cf4 \strokec4  alr;\cb1 \
+\cf6 \cb3 \strokec6 int\cf4 \strokec4  expectedACK = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cf6 \cb3 \strokec6 int\cf4 \strokec4  receivedACK;\cb1 \
+\
+\cf6 \cb3 \strokec6 typedef\cf4 \strokec4  \cf6 \strokec6 struct\cf4 \strokec4  dataPacket\{\cb1 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3   \cf6 \strokec6 int\cf4 \strokec4  dataCount;\cb1 \
+\cb3   \cf6 \strokec6 int\cf4 \strokec4  sequenceNumber;\cb1 \
+\cb3   \cf6 \strokec6 char\cf4 \strokec4  data[\cf9 \strokec9 80\cf4 \strokec4 ];\cb1 \
+\cb3 \} dataPacket;\cb1 \
+\
+\pard\pardeftab720\sl360\partightenfactor0
+\cf6 \cb3 \strokec6 int\cf4 \strokec4  \cf8 \strokec8 main\cf4 \strokec4 (\cf6 \strokec6 void\cf4 \strokec4 ) \{\cb1 \
+\
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3     \cf8 \strokec8 srand\cf4 \strokec4 (\cf8 \strokec8 time\cf4 \strokec4 (\cf6 \strokec6 NULL\cf4 \strokec4 ));\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  sequenceNumber= \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 char\cf4 \strokec4  inputTimeoutLen[STRING_SIZE];\cb1 \
+\cb3     \cf6 \strokec6 char\cf4 \strokec4  inputPacketLossRate[STRING_SIZE];\cb1 \
+\cb3     \cf6 \strokec6 char\cf4 \strokec4  inputACKLossRate[STRING_SIZE];\cb1 \
+\cb3    \cf6 \strokec6 int\cf4 \strokec4  sock_client;  \cf2 \strokec2 /* Socket used by client */\cf4 \cb1 \strokec4 \
+\cb3    \cf6 \strokec6 struct\cf4 \strokec4  sockaddr_in client_addr;  \cf2 \strokec2 /* Internet address structure that\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2                                         stores client address */\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    \cf6 \strokec6 unsigned\cf4 \strokec4  \cf6 \strokec6 short\cf4 \strokec4  client_port;  \cf2 \strokec2 /* Port number used by client (local port) */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf6 \strokec6 struct\cf4 \strokec4  sockaddr_in server_addr;  \cf2 \strokec2 /* Internet address structure that\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2                                         stores server address */\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    \cf6 \strokec6 struct\cf4 \strokec4  hostent * server_hp;      \cf2 \strokec2 /* Structure to store server's IP\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2                                         address */\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    \cf6 \strokec6 char\cf4 \strokec4  server_hostname[STRING_SIZE]; \cf2 \strokec2 /* Server's hostname */\cf4 \cb1 \strokec4 \
+\cb3    \cf6 \strokec6 unsigned\cf4 \strokec4  \cf6 \strokec6 short\cf4 \strokec4  server_port;  \cf2 \strokec2 /* Port number used by server (remote port) */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf6 \strokec6 char\cf4 \strokec4  sentence[STRING_SIZE];  \cf2 \strokec2 /* send message */\cf4 \cb1 \strokec4 \
+\cb3    \cf6 \strokec6 char\cf4 \strokec4  modifiedSentence[STRING_SIZE]; \cf2 \strokec2 /* receive message */\cf4 \cb1 \strokec4 \
+\cb3    \cf6 \strokec6 char\cf4 \strokec4  ack[\cf9 \strokec9 2\cf4 \strokec4 ]; \cf2 \strokec2 //ack to be received from the server\cf4 \cb1 \strokec4 \
+\cb3    \cf6 \strokec6 unsigned\cf4 \strokec4  \cf6 \strokec6 int\cf4 \strokec4  msg_len;  \cf2 \strokec2 /* length of message */\cf4 \cb1 \strokec4 \
+\cb3    \cf6 \strokec6 int\cf4 \strokec4  bytes_sent, bytes_recd; \cf2 \strokec2 /* number of bytes sent or received */\cf4 \cb1 \strokec4 \
+\cb3     FILE * fp;\cb1 \
+\cb3     \cf6 \strokec6 char\cf4 \strokec4  * line = \cf6 \strokec6 NULL\cf4 \strokec4 ;\cb1 \
+\cb3     \cf10 \strokec10 size_t\cf4 \strokec4  len = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf10 \strokec10 ssize_t\cf4 \strokec4  read;\cb1 \
+\cb3    \cf2 \strokec2 /* open a socket */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf5 \strokec5 if\cf4 \strokec4  ((sock_client = \cf8 \strokec8 socket\cf4 \strokec4 (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < \cf9 \strokec9 0\cf4 \strokec4 ) \{\cb1 \
+\cb3       \cf8 \strokec8 perror\cf4 \strokec4 (\cf7 \strokec7 "Client: can't open datagram socket\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3       \cf8 \strokec8 exit\cf4 \strokec4 (\cf9 \strokec9 1\cf4 \strokec4 );\cb1 \
+\cb3    \}\cb1 \
+\
+\
+\cb3     fp = \cf8 \strokec8 fopen\cf4 \strokec4 (\cf7 \strokec7 "sample.txt"\cf4 \strokec4 , \cf7 \strokec7 "r"\cf4 \strokec4 );\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (fp == \cf6 \strokec6 NULL\cf4 \strokec4 )\cb1 \
+\cb3         \cf8 \strokec8 exit\cf4 \strokec4 (EXIT_FAILURE);\cb1 \
+\
+\
+\cb3    \cf2 \strokec2 /* Note: there is no need to initialize local client address information\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2             unless you want to specify a specific local port.\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2             The local address initialization and binding is done automatically\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2             when the sendto function is called later, if the socket has not\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2             already been bound.\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2             The code below illustrates how to initialize and bind to a\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2             specific local port, if that is desired. */\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    \cf2 \strokec2 /* initialize client address information */\cf4 \cb1 \strokec4 \
+\
+\cb3    client_port = \cf9 \strokec9 0\cf4 \strokec4 ;   \cf2 \strokec2 /* This allows choice of any available local port */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf2 \strokec2 /* Uncomment the lines below if you want to specify a particular\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2              local port: */\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    \cf2 \strokec2 /*\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2    printf("Enter port number for client: ");\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2    scanf("%hu", &client_port);\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2    */\cf4 \cb1 \strokec4 \
+\
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    \cf2 \strokec2 /* clear client address structure and initialize with client address */\cf4 \cb1 \strokec4 \
+\cb3    \cf8 \strokec8 memset\cf4 \strokec4 (&client_addr, \cf9 \strokec9 0\cf4 \strokec4 , \cf6 \strokec6 sizeof\cf4 \strokec4 (client_addr));\cb1 \
+\cb3    client_addr.\cf12 \strokec12 sin_family\cf4 \strokec4  = AF_INET;\cb1 \
+\cb3    client_addr.\cf12 \strokec12 sin_addr\cf4 \strokec4 .\cf12 \strokec12 s_addr\cf4 \strokec4  = \cf8 \strokec8 htonl\cf4 \strokec4 (INADDR_ANY); \cf2 \strokec2 /* This allows choice of\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf2 \cb3 \strokec2                                         any host interface, if more than one\cf4 \cb1 \strokec4 \
+\cf2 \cb3 \strokec2                                         are present */\cf4 \cb1 \strokec4 \
+\pard\pardeftab720\sl360\partightenfactor0
+\cf4 \cb3    client_addr.\cf12 \strokec12 sin_port\cf4 \strokec4  = \cf8 \strokec8 htons\cf4 \strokec4 (client_port);\cb1 \
+\
+\cb3    \cf2 \strokec2 /* bind the socket to the local client port */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf5 \strokec5 if\cf4 \strokec4  (\cf8 \strokec8 bind\cf4 \strokec4 (sock_client, (\cf6 \strokec6 struct\cf4 \strokec4  sockaddr *) &client_addr,\cb1 \
+\cb3                                     \cf6 \strokec6 sizeof\cf4 \strokec4  (client_addr)) < \cf9 \strokec9 0\cf4 \strokec4 ) \{\cb1 \
+\cb3       \cf8 \strokec8 perror\cf4 \strokec4 (\cf7 \strokec7 "Client: can't bind to local address\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3       \cf8 \strokec8 close\cf4 \strokec4 (sock_client);\cb1 \
+\cb3       \cf8 \strokec8 exit\cf4 \strokec4 (\cf9 \strokec9 1\cf4 \strokec4 );\cb1 \
+\cb3    \}\cb1 \
+\
+\
+\cb3    \cf2 \strokec2 /* end of local address initialization and binding */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf2 \strokec2 /* initialize server address information */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Enter hostname of server: "\cf4 \strokec4 );\cb1 \
+\cb3    \cf8 \strokec8 scanf\cf4 \strokec4 (\cf7 \strokec7 "%s"\cf4 \strokec4 , server_hostname);\cb1 \
+\cb3    \cf5 \strokec5 if\cf4 \strokec4  ((server_hp = \cf8 \strokec8 gethostbyname\cf4 \strokec4 (server_hostname)) == \cf6 \strokec6 NULL\cf4 \strokec4 ) \{\cb1 \
+\cb3       \cf8 \strokec8 perror\cf4 \strokec4 (\cf7 \strokec7 "Client: invalid server hostname\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3       \cf8 \strokec8 close\cf4 \strokec4 (sock_client);\cb1 \
+\cb3       \cf8 \strokec8 exit\cf4 \strokec4 (\cf9 \strokec9 1\cf4 \strokec4 );\cb1 \
+\cb3    \}\cb1 \
+\cb3    \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Enter port number for server: "\cf4 \strokec4 );\cb1 \
+\cb3    \cf8 \strokec8 scanf\cf4 \strokec4 (\cf7 \strokec7 "%hu"\cf4 \strokec4 , &server_port);\cb1 \
+\
+\cb3    \cf2 \strokec2 /* Clear server address structure and initialize with server address */\cf4 \cb1 \strokec4 \
+\cb3    \cf8 \strokec8 memset\cf4 \strokec4 (&server_addr, \cf9 \strokec9 0\cf4 \strokec4 , \cf6 \strokec6 sizeof\cf4 \strokec4 (server_addr));\cb1 \
+\cb3    server_addr.\cf12 \strokec12 sin_family\cf4 \strokec4  = AF_INET;\cb1 \
+\cb3    \cf8 \strokec8 memcpy\cf4 \strokec4 ((\cf6 \strokec6 char\cf4 \strokec4  *)&server_addr.\cf12 \strokec12 sin_addr\cf4 \strokec4 , server_hp->\cf12 \strokec12 h_addr\cf4 \strokec4 ,\cb1 \
+\cb3                                     server_hp->\cf12 \strokec12 h_length\cf4 \strokec4 );\cb1 \
+\cb3    server_addr.\cf12 \strokec12 sin_port\cf4 \strokec4  = \cf8 \strokec8 htons\cf4 \strokec4 (server_port);\cb1 \
+\
+\cb3    \cf2 \strokec2 /* user interface */\cf4 \cb1 \strokec4 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Please input a Timeout Quantity:\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3     \cf8 \strokec8 scanf\cf4 \strokec4 (\cf7 \strokec7 "%s"\cf4 \strokec4 , inputTimeoutLen);\cb1 \
+\cb3     \cf8 \strokec8 sscanf\cf4 \strokec4 (inputTimeoutLen, \cf7 \strokec7 "%d"\cf4 \strokec4 , &timeoutLen);\cb1 \
+\cb3     \cf6 \strokec6 char\cf4 \strokec4             name[\cf9 \strokec9 20\cf4 \strokec4 ] = \{\cf9 \strokec9 0\cf4 \strokec4 \}; \cf2 \strokec2 // in case of single character input\cf4 \cb1 \strokec4 \
+\cb3     \cf6 \strokec6 struct\cf4 \strokec4  timeval timeout;\cb1 \
+\cb3     \cf5 \strokec5 if\cf4 \strokec4  (timeoutLen>=\cf9 \strokec9 6\cf4 \strokec4 )\{\cb1 \
+\cb3         timeoutLen = timeoutLen%\cf9 \strokec9 6\cf4 \strokec4 ;\cb1 \
+\cb3         timeout.\cf12 \strokec12 tv_sec\cf4 \strokec4  = \cf8 \strokec8 pow\cf4 \strokec4 (\cf9 \strokec9 10\cf4 \strokec4 ,timeoutLen);\cb1 \
+\cb3         timeout.\cf12 \strokec12 tv_usec\cf4 \strokec4  = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \}\cb1 \
+\cb3     \cf5 \strokec5 else\cf4 \strokec4 \{\cb1 \
+\cb3         timeout.\cf12 \strokec12 tv_sec\cf4 \strokec4  = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3         timeout.\cf12 \strokec12 tv_usec\cf4 \strokec4  = \cf8 \strokec8 pow\cf4 \strokec4 (\cf9 \strokec9 10\cf4 \strokec4 ,timeoutLen);\cb1 \
+\cb3     \}\cb1 \
+\cb3     \cf6 \strokec6 char\cf4 \strokec4  message[\cf9 \strokec9 100\cf4 \strokec4 ];\cb1 \
+\cb3     \cf8 \strokec8 setsockopt\cf4 \strokec4  (sock_client, SOL_SOCKET, SO_RCVTIMEO, (\cf6 \strokec6 char\cf4 \strokec4  *)&timeout,\cb1 \
+\cb3                 \cf6 \strokec6 sizeof\cf4 \strokec4 (timeout));\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  totalData = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  totalPackets = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  totalTransmissions = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  totalRetransmissions = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  totalACKs = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf6 \strokec6 int\cf4 \strokec4  totalTimeouts = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3     \cf5 \strokec5 while\cf4 \strokec4  ((read = \cf8 \strokec8 getline\cf4 \strokec4 (&line, &len, fp)) != -\cf9 \strokec9 1\cf4 \strokec4 )\{\cb1 \
+\cb3         \cf6 \strokec6 int\cf4 \strokec4  retransmissions = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3         \cf6 \strokec6 int\cf4 \strokec4  flag = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3         \cf8 \strokec8 memset\cf4 \strokec4 (message, \cf9 \strokec9 0\cf4 \strokec4 , \cf9 \strokec9 100\cf4 \strokec4  );\cb1 \
+\cb3         \cf6 \strokec6 int\cf4 \strokec4  convertdata = read-\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3         \cf6 \strokec6 char\cf4 \strokec4  datastr[\cf9 \strokec9 2\cf4 \strokec4 ];\cb1 \
+\cb3         \cf6 \strokec6 char\cf4 \strokec4  buffer[\cf9 \strokec9 100\cf4 \strokec4 ], *ptr;\cb1 \
+\cb3         \cf6 \strokec6 struct\cf4 \strokec4  dataPacket temp = \{.\cf12 \strokec12 dataCount\cf4 \strokec4  = convertdata, .\cf12 \strokec12 sequenceNumber\cf4 \strokec4  = sequenceNumber, .\cf12 \strokec12 data\cf4 \strokec4  = * line\};\cb1 \
+\cb3         \cf8 \strokec8 memcpy\cf4 \strokec4 (temp.\cf12 \strokec12 data\cf4 \strokec4 ,line,\cf8 \strokec8 strlen\cf4 \strokec4 (line));\cb1 \
+\cb3         \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "%s"\cf4 \strokec4 , temp.\cf12 \strokec12 data\cf4 \strokec4 );\cb1 \
+\cb3         \cf5 \strokec5 if\cf4 \strokec4  (sequenceNumber==\cf9 \strokec9 0\cf4 \strokec4 )\cb1 \
+\cb3             sequenceNumber = \cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3         \cf5 \strokec5 else\cf4 \cb1 \strokec4 \
+\cb3             sequenceNumber = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3         \cf5 \strokec5 while\cf4 \strokec4  (flag == \cf9 \strokec9 0\cf4 \strokec4 )\{\cb1 \
+\cb3             \cf5 \strokec5 if\cf4 \strokec4  (retransmissions==\cf9 \strokec9 0\cf4 \strokec4 )\{\cb1 \
+\cb3                 totalPackets+=\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3                 totalData+=convertdata;\cb1 \
+\cb3             \}\cb1 \
+\cb3             totalTransmissions+=\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3             retransmissions+=\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3             bytes_sent = \cf8 \strokec8 sendto\cf4 \strokec4 (sock_client, &temp, convertdata+\cf9 \strokec9 4\cf4 \strokec4 , \cf9 \strokec9 0\cf4 \strokec4 ,\cb1 \
+\cb3                 (\cf6 \strokec6 struct\cf4 \strokec4  sockaddr *) &server_addr, \cf6 \strokec6 sizeof\cf4 \strokec4  (server_addr));\cb1 \
+\cb3             \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Waiting for response from server...\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3             \cf5 \strokec5 if\cf4 \strokec4  ((\cf8 \strokec8 recvfrom\cf4 \strokec4 (sock_client, ack, STRING_SIZE, \cf9 \strokec9 0\cf4 \strokec4 ,\cb1 \
+\cb3                 (\cf6 \strokec6 struct\cf4 \strokec4  sockaddr *) \cf9 \strokec9 0\cf4 \strokec4 , \cf9 \strokec9 0\cf4 \strokec4 ))<\cf9 \strokec9 0\cf4 \strokec4 )\{\cb1 \
+\cb3                 \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Timeout Expired\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3                 totalTimeouts+=\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3             \}\cb1 \
+\cb3             \cf5 \strokec5 else\cf4 \strokec4 \{\cb1 \
+\cb3                 \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 received\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3                 flag = \cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3                 receivedACK = \cf8 \strokec8 atoi\cf4 \strokec4 (ack);\cb1 \
+\cb3                 \cf5 \strokec5 if\cf4 \strokec4  (expectedACK == receivedACK && receivedACK == \cf9 \strokec9 1\cf4 \strokec4 )\{\cb1 \
+\cb3                   expectedACK = \cf9 \strokec9 0\cf4 \strokec4 ;\cb1 \
+\cb3                   \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Received ACK has sequence number: %d\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 , receivedACK);\cb1 \
+\cb3                 \}\cb1 \
+\cb3                 \cf5 \strokec5 else\cf4 \strokec4  \cf5 \strokec5 if\cf4 \strokec4  (expectedACK == receivedACK && receivedACK == \cf9 \strokec9 0\cf4 \strokec4 )\{\cb1 \
+\cb3                   expectedACK = \cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3                   \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Received ACK has sequence number: %d\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 , receivedACK);\cb1 \
+\cb3                 \}\cb1 \
+\cb3                 \cf5 \strokec5 else\cf4 \strokec4 \{\cb1 \
+\cb3                     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Received ACK has sequence number: %d\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 , receivedACK);\cb1 \
+\cb3                   \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "Error receiving ACK\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3                   EXIT_FAILURE;\cb1 \
+\cb3                 \}\cb1 \
+\cb3                 totalACKs+=\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3             \}\cb1 \
+\cb3         \}\cb1 \
+\cb3         \cf5 \strokec5 if\cf4 \strokec4  (retransmissions>\cf9 \strokec9 1\cf4 \strokec4 )\{\cb1 \
+\cb3             totalRetransmissions+=retransmissions-\cf9 \strokec9 1\cf4 \strokec4 ;\cb1 \
+\cb3         \}\cb1 \
+\
+\cb3     \};\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Total Packets: %d"\cf4 \strokec4 , totalPackets);\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Total Data: %d"\cf4 \strokec4 ,totalData);\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Total Retransmissions: %d"\cf4 \strokec4 ,totalRetransmissions);\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Total Transmissions: %d"\cf4 \strokec4 ,totalTransmissions);\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Total ACKs: %d"\cf4 \strokec4 ,totalACKs);\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 Total Timeouts: %d"\cf4 \strokec4 ,totalTimeouts);\cb1 \
+\cb3     \cf8 \strokec8 printf\cf4 \strokec4 (\cf7 \strokec7 "\cf11 \strokec11 \\n\cf7 \strokec7 "\cf4 \strokec4 );\cb1 \
+\cb3     \cf2 \strokec2 // struct dataPacket temp = \{.dataCount = 0, .sequenceNumber = 0, .data = "Finished"\};\cf4 \cb1 \strokec4 \
+\cb3     \cf2 \strokec2 // sendto(sock_client, &temp, 10, 0,(struct sockaddr *) &server_addr, sizeof (server_addr));\cf4 \cb1 \strokec4 \
+\cb3    \cf2 \strokec2 /* close the socket */\cf4 \cb1 \strokec4 \
+\
+\cb3    \cf8 \strokec8 close\cf4 \strokec4  (sock_client);\cb1 \
+\cb3    \cf8 \strokec8 fclose\cf4 \strokec4 (fp);\cb1 \
+\cb3 \}\cb1 \
+\
+}
