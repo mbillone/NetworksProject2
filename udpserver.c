@@ -118,9 +118,15 @@ int main(void) {
    client_addr_len = sizeof (client_addr);
 
    for (;;) {
-       memset(sentence, 0, STRING_SIZE );
-       struct dataPacket temp;
-       bytes_recd = recvfrom(sock_server, &temp, sizeof(temp), 0,
+
+     int pl = packetLoss();
+     printf("print from packet loss is: %d\n", pl);
+     int al = ackLoss();
+     printf("print from ack loss is: %d\n", al);
+
+      memset(sentence, 0, STRING_SIZE );
+      struct dataPacket temp;
+      bytes_recd = recvfrom(sock_server, &temp, sizeof(temp), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
         printf("received: %s\n", temp.data);
 
@@ -128,11 +134,10 @@ int main(void) {
 
         dataLength = temp.dataCount;
         printf("Packet has size: %d\n", dataLength);
-        
+
         receivedSequence = temp.sequenceNumber;
         printf("Sequence Number is: %d\n", receivedSequence);
 
-        int pl = packetLoss();
         if (dataLength==0){
             int totalAcks = droppedACKs+acksWithoutLoss;
             printf("\nSuccessful Data Packets: %d",successfulDataPackets);
@@ -220,6 +225,4 @@ int main(void) {
 //    printf("\nDropped ACKs: %d",droppedACKs);
 //    printf("\nTotal ACKs: %d",totalAcks);
 //    printf("\n");
-   fclose(fp);
 }
-

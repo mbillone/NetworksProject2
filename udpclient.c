@@ -186,22 +186,35 @@ int main(void) {
             else{
                 flag = 1;
                 receivedACK = atoi(ack);
+                printf("ACK retreived: %d\n", receivedACK);
                 if (expectedACK == receivedACK && receivedACK == 1){
                   expectedACK = 0;
-                  printf("ACK %d received\n", receivedACK);
+                  printf("Received ACK has sequence number: %d\n", receivedACK);
+                  printf("Next ACK should be: %d\n", expectedACK);
                 }
                 else if (expectedACK == receivedACK && receivedACK == 0){
                   expectedACK = 1;
-                  printf("ACK %d received\n", receivedACK);
+                  printf("Received ACK has sequence number: %d\n", receivedACK);
+                  printf("Next ACK should be: %d\n", expectedACK);
+                }
+                else if (expectedACK != receivedACK && receivedACK == 0){
+                  printf("ACK recevied was: %d\n", receivedACK);
+                  printf("ACKS do not match. Retransmit packet of sequence number%d\n", expectedACK);
+                  expectedACK = 1;
+                }
+                else if (expectedACK != receivedACK && receivedACK == 1){
+                 printf("ACK received was: %d\n", receivedACK);
+                  printf("ACKS do not match. Retransmit packet of sequnce number: %d\n", expectedACK);
+                  expectedACK = 0;
                 }
                 else{
-                    printf("ACK %d received\n", receivedACK);
-                  printf("Error receiving ACK\n");
-                  EXIT_FAILURE;
+
+                  printf("ACK sequence numbers not equal or error, ACK received is: %d \n", receivedACK);
                 }
                 totalACKs+=1;
             }
         }
+        printf("\n\n\n");
         if (retransmissions>1){
             totalRetransmissions+=retransmissions-1;
         }
@@ -222,4 +235,3 @@ int main(void) {
    close (sock_client);
    fclose(fp);
 }
-
