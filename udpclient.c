@@ -139,22 +139,19 @@ int main(void) {
     sscanf(inputTimeoutLen, "%d", &timeoutLen);
     printf("Please input an ACK Loss Rate:\n");
     scanf("%s", inputACKLossRate);
-    // sscanf(inputACKLossRate, "%lf", &alr);
     printf("Please input a Packet Loss Rate:\n");
     scanf("%s", inputPacketLossRate);
-    // sscanf(inputPacketLossRate, "%lf", &plr);
     char            name[20] = {0}; // in case of single character input
-    // fd_set          input_set;
-    int             ready_for_reading = 0;
-    int             read_bytes = 0;
-    // timerAmount = pow(10,timeoutLen);
-    struct timeval timeout;      
-    printf("%f",(pow(10,timeoutLen)/1000));
-    timeout.tv_sec = 0;
-    timeout.tv_usec = pow(10,timeoutLen);
-  
-    int i = 0;
-    // int messageLen = 0;
+    struct timeval timeout;
+    if (timeoutLen>=6){
+        timeoutLen = timeoutLen%6;
+        timeout.tv_sec = pow(10,timeoutLen);
+        timeout.tv_usec = 0;
+    }
+    else{
+        timeout.tv_sec = 0;
+        timeout.tv_usec = pow(10,timeoutLen);
+    }
     char message[100];
     setsockopt (sock_client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout));
@@ -175,55 +172,21 @@ int main(void) {
             sequenceNumber = 1;
         else
             sequenceNumber = 0;
-        // printf("%s\n",message);
         while (flag == 0){
             bytes_sent = sendto(sock_client, message, 100, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
-            // FD_ZERO(&sock); 
-            // FD_SET(sock_client,&sock); 
-
-            // int retval = select(sock_client+1, &sock, NULL, NULL, &timeout); 
             printf("Waiting for response from server...\n");
-            // if (setsockopt (sock_client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
-            //     sizeof(timeout)) < 0){
-            //      printf("timeout");
-            // }
-            // else{
             if ((recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
-            (struct sockaddr *) 0, 0))<0){}
+                (struct sockaddr *) 0, 0))<0){
+                printf("\nnot received\n");
+            }
             else{
+                printf("\nreceived\n");
                 flag = 1;
             }
-            // }
-            
-            // if (ready_for_reading == -1) {
-            //     /* Some error has occured in input */
-            //     printf("Unable to read your input\n");
-            //     return -1;
-            // } 
-            // else{
-            //     printf("\nThe response from server is:\n");
-            //     printf("%s\n\n", modifiedSentence);
-
-            // }
-            
         }
     };
     printf("\n");
-//    printf("Please input a sentence:\n");
-//    scanf("%s", sentence);
-//    msg_len = strlen(sentence) + 1;
-
-//    bytes_sent = sendto(sock_client, sentence, msg_len, 0,
-//             (struct sockaddr *) &server_addr, sizeof (server_addr));
-
-//    /* get response from server */
-
-//    printf("Waiting for response from server...\n");
-//    bytes_recd = recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
-//                 (struct sockaddr *) 0, 0);
-//    printf("\nThe response from server is:\n");
-//    printf("%s\n\n", modifiedSentence);
 
    /* close the socket */
 
