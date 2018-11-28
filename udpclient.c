@@ -21,6 +21,11 @@ double alr;
 int expectedACK = 0;
 int receivedACK;
 
+typedef struct dataPacket{
+  int dataCount;
+  int sequenceNumber;
+  char data[80];
+} dataPacket;
 
 int main(void) {
 
@@ -139,20 +144,23 @@ int main(void) {
     char message[100];
     setsockopt (sock_client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout));
+                
+    
     while ((read = getline(&line, &len, fp)) != -1){
         int flag = 0;
         memset(message, 0, 100 );
         int convertdata = read-1;
         char datastr[2];
-
-        sprintf(message,"%d;%d;%s", convertdata,sequenceNumber,line);
-
+        char buffer[100], *ptr;
+        struct dataPacket temp = {.dataCount = convertdata, .sequenceNumber = sequenceNumber, .data = * line};
+        memcpy(temp.data,line,strlen(line));
+        printf("%s", temp.data);
         if (sequenceNumber==0)
             sequenceNumber = 1;
         else
             sequenceNumber = 0;
         while (flag == 0){
-            bytes_sent = sendto(sock_client, message, 100, 0,
+            bytes_sent = sendto(sock_client, &temp, convertdata+4, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
             printf("Waiting for response from server...\n");
             if ((recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,

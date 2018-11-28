@@ -19,7 +19,11 @@
 #define SERV_UDP_PORT 3636
 
 double timeoutLen;
-
+typedef struct dataPacket{
+  int dataCount;
+  int sequenceNumber;
+  char data[80];
+} dataPacket;
 
 int receivedSequence;
 int dataLength;
@@ -107,10 +111,13 @@ int main(void) {
 
    for (;;) {
       memset(sentence, 0, STRING_SIZE );
-      bytes_recd = recvfrom(sock_server, &sentence, STRING_SIZE, 0,
+      struct dataPacket temp;
+      bytes_recd = recvfrom(sock_server, &temp, sizeof(temp), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
-      printf("Received Sentence is: %s\n     with length %d",
-                         sentence, bytes_recd);
+    //   printf("Received Sentence is: %s\n     with length %d",
+    //                      temp.data, temp.dataCount);
+        // strcpy(temp.data,temp.data);
+        printf("received: %s\n", temp.data);
         /*
         char s[1] = ";";
         char *pt;
@@ -120,27 +127,26 @@ int main(void) {
             pt = strtok (NULL, ";");
         }
         */
-        char splitStrings[5][80];
-        int i;
-        int j;
-        int cnt;
-        j=0;
-        cnt=0;
-        for(i=0;i<=(strlen(sentence));i++){
-            if(sentence[i]==';'||sentence[i]=='\0'){
-                splitStrings[cnt][j]='\0';
-                cnt++;
-                j=0;
-            }
-            else{
-                splitStrings[cnt][j]=sentence[i];
-                j++;
-            }
-        }
+        // int i;
+        // int j;
+        // int cnt;
+        // j=0;
+        // cnt=0;
+        // for(i=0;i<=(strlen(sentence));i++){
+        //     if(sentence[i]==';'||sentence[i]=='\0'){
+        //         splitStrings[cnt][j]='\0';
+        //         cnt++;
+        //         j=0;
+        //     }
+        //     else{
+        //         splitStrings[cnt][j]=sentence[i];
+        //         j++;
+        //     }
+        // }
 
-        dataLength = atoi(splitStrings[0]);
+        dataLength = temp.dataCount;
         printf("Packet has size: %d\n", dataLength);
-        receivedSequence = atoi(splitStrings[1]);
+        receivedSequence = temp.sequenceNumber;
         printf("Sequence Number is: %d\n", receivedSequence);
 
         if (expectedSequence != receivedSequence && receivedSequence == 1){
