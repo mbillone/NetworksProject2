@@ -144,8 +144,8 @@ int main(void) {
     char message[100];
     setsockopt (sock_client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout,
                 sizeof(timeout));
-                
-    
+
+
     while ((read = getline(&line, &len, fp)) != -1){
         int flag = 0;
         memset(message, 0, 100 );
@@ -163,7 +163,7 @@ int main(void) {
             bytes_sent = sendto(sock_client, &temp, convertdata+4, 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
             printf("Waiting for response from server...\n");
-            if ((recvfrom(sock_client, modifiedSentence, STRING_SIZE, 0,
+            if ((recvfrom(sock_client, ack, STRING_SIZE, 0,
                 (struct sockaddr *) 0, 0))<0){
                 printf("\nnot received\n");
             }
@@ -171,17 +171,30 @@ int main(void) {
                 printf("\nreceived\n");
                 flag = 1;
                 receivedACK = atoi(ack);
+                printf("ACK retreived: %d\n", receivedACK);
                 if (expectedACK == receivedACK && receivedACK == 1){
                   expectedACK = 0;
                   printf("Received ACK has sequence number: %d\n", receivedACK);
+                  printf("Next ACK should be: %d\n", expectedACK);
                 }
                 else if (expectedACK == receivedACK && receivedACK == 0){
                   expectedACK = 1;
                   printf("Received ACK has sequence number: %d\n", receivedACK);
+                  printf("Next ACK should be: %d\n", expectedACK);
+                }
+                else if (expectedACK != receivedACK && receivedACK == 0){
+                  printf("ACK recevied was: %d\n", receivedACK);
+                  printf("ACKS do not match. Retransmit packet of sequence number%d\n", expectedACK);
+                  expectedACK = 1;
+                }
+                else if (expectedACK != receivedACK && receivedACK == 1){
+                 printf("ACK received was: %d\n", receivedACK);
+                  printf("ACKS do not match. Retransmit packet of sequnce number: %d\n", expectedACK);
+                  expectedACK = 0;
                 }
                 else{
-                  printf("Error receiving ACK\n");
-                  EXIT_FAILURE;
+
+                  printf("ACK sequence numbers not equal or error, ACK received is: %d \n", receivedACK);
                 }
             }
         }

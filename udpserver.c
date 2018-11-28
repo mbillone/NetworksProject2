@@ -16,7 +16,7 @@
    incoming messages from clients. You should change this to a different
    number to prevent conflicts with others in the class. */
 
-#define SERV_UDP_PORT 3636
+#define SERV_UDP_PORT 3637
 
 double timeoutLen;
 typedef struct dataPacket{
@@ -110,6 +110,12 @@ int main(void) {
    client_addr_len = sizeof (client_addr);
 
    for (;;) {
+
+     int pl = packetLoss();
+     printf("print from packet loss is: %d\n", pl);
+     int al = ackLoss();
+     printf("print from ack loss is: %d\n", al);
+
       memset(sentence, 0, STRING_SIZE );
       struct dataPacket temp;
       bytes_recd = recvfrom(sock_server, &temp, sizeof(temp), 0,
@@ -149,33 +155,28 @@ int main(void) {
         receivedSequence = temp.sequenceNumber;
         printf("Sequence Number is: %d\n", receivedSequence);
 
-        if (expectedSequence != receivedSequence && receivedSequence == 1){
+        if (expectedSequence != receivedSequence && receivedSequence == 1 && pl == 1){
           ackSequence = 0;
           printf("Packet is duplicate, Sending ACK: %d\n", ackSequence);
         }
-        else if(expectedSequence != receivedSequence && receivedSequence == 0){
+        else if(expectedSequence != receivedSequence && receivedSequence == 0 && pl == 1){
           ackSequence = 1;
-          printf("Packet is duplicate, Sending ACK: %d\n", ackSequence);
+          printf("Packet is duplicate, Sending ACK: %d\n", ackSequence && pl == 1);
         }
-        else if(expectedSequence == receivedSequence && receivedSequence == 1){
+        else if(expectedSequence == receivedSequence && receivedSequence == 1 && pl == 1){
           printf("Packet received with sequence number: %d\n", receivedSequence);
           expectedSequence = 0;
           ackSequence = 1;
         }
-        else if(expectedSequence == receivedSequence && receivedSequence == 0){
+        else if(expectedSequence == receivedSequence && receivedSequence == 0 && pl == 1){
           printf("Packet received with sequence number: %d\n", receivedSequence);
           expectedSequence = 1;
           ackSequence = 0;
         }
         else {
-          printf("Error on comparing sequence numbers\n");
-          EXIT_FAILURE;
+          printf("Packet was lost, waiting for next packet\n");
         }
 
-
-      /* prepare the ack to send */
-
-      sprintf(ack, "%d", ackSequence);
       // msg_len = bytes_recd;
       // for (i=0; i<msg_len; i++)
       //    modifiedSentence[i] = toupper (sentence[i]);
@@ -183,13 +184,12 @@ int main(void) {
 
 
       /* send message */
-
-      int pl = packetLoss();
-      int al = ackLoss();
       if ((pl==1)&&(al==1)){
-          printf("\nreturning this one\n");
+          sprintf(ack, "%d", ackSequence);
+          printf("\nreturning ack: %d\n", ackSequence);
             bytes_sent = sendto(sock_server, ack, 2, 0,
                (struct sockaddr*) &client_addr, client_addr_len);
+
       }
       else if (pl==0){
           printf("\npacket loss\n");
