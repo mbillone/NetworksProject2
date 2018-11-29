@@ -121,8 +121,6 @@ int main(void) {
 
      int pl = packetLoss();
      int al = ackLoss();
-     memset(temp.data, 0, 80 );
-      memset(sentence, 0, STRING_SIZE );
       bytes_recd = recvfrom(sock_server, &temp, sizeof(temp), 0,
                      (struct sockaddr *) &client_addr, &client_addr_len);
         allPacketsReceived+=1;
@@ -162,12 +160,16 @@ int main(void) {
                 printf("Duplicate packet %d received with %d databytes",temp.sequenceNumber,temp.dataCount);
             }
             else if(expectedSequence == receivedSequence && receivedSequence == 1){
-                printf("Packet %d received with %d data bytes", temp.sequenceNumber, temp.dataCount);
+                fprintf(fp, "%s", temp.data);
+                printf("Packet %d received with %d data bytes\n", temp.sequenceNumber, temp.dataCount);
+                printf("data is: %s\n", temp.data);
                 expectedSequence = 0;
                 ackSequence = 1;
             }
             else if(expectedSequence == receivedSequence && receivedSequence == 0){
-                printf("Packet %d received with %d data bytes", temp.sequenceNumber, temp.dataCount); 
+                fprintf(fp, "%s", temp.data);
+                printf("Packet %d received with %d data bytes\n", temp.sequenceNumber, temp.dataCount);
+                printf("data is: %s\n", temp.data);
                 expectedSequence = 1;
                 ackSequence = 0;
             }

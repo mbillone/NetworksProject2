@@ -67,7 +67,6 @@ int main(void) {
     if (fp == NULL)
         exit(EXIT_FAILURE);
 
-
    /* Note: there is no need to initialize local client address information
             unless you want to specify a specific local port.
             The local address initialization and binding is done automatically
@@ -159,6 +158,8 @@ int main(void) {
         char buffer[100], *ptr;
         struct dataPacket temp = {.dataCount = convertdata, .sequenceNumber = sequenceNumber, .data = * line};
         memcpy(temp.data,line,strlen(line));
+        printf("data is: %s\n", temp.data);
+
         if (sequenceNumber==0)
             sequenceNumber = 1;
         else
@@ -174,7 +175,7 @@ int main(void) {
             }
             totalTransmissions+=1;
             retransmissions+=1;
-            bytes_sent = sendto(sock_client, &temp, convertdata+4, 0,
+            bytes_sent = sendto(sock_client, &temp, sizeof(temp), 0,
                 (struct sockaddr *) &server_addr, sizeof (server_addr));
             if ((recvfrom(sock_client, ack, STRING_SIZE, 0,
                 (struct sockaddr *) 0, 0))<0){

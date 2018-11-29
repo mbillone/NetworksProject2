@@ -1,8 +1,8 @@
 CC= /usr/bin/gcc
-all: udpclient udpserver
+all:	udpclient udpserver
 
 udpclient: udpclient.c;
-	${CC} udpclient.c -o udpclient
+	${CC} udpclient.c -o udpclient -lm
 
 udpserver: udpserver.c;
 	${CC} udpserver.c -o udpserver
